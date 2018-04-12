@@ -1,27 +1,35 @@
-public class Rocket implements SpaceShip {
+import java.util.ArrayList;
+import java.util.List;
 
-    protected int rCost;
-    protected int rWeight;
+public class Rocket {
+
+    protected int cost;
+    protected int baseWeight;
     protected int maxWeight;
     protected int chanceOfLaunchExplode;
     protected int chanceOfLandCrash;
-    protected int cWeight = 0;
+    protected int cargoWeight = 0;
+    protected List<Cargo> cargo = new ArrayList<Cargo>();
 
-    public boolean launch() {
-        return true;
+    public boolean launch(){
+        double probability = ((chanceOfLaunchExplode/100) * (cargoWeight/maxWeight));
+        double random = Math.random();
+        return random > probability;
     }
 
-    public boolean land() {
-        return true;
+    public boolean land(){
+        double probability = ((chanceOfLandCrash/100) * (cargoWeight/maxWeight));
+        double random = Math.random();
+        return random > probability;
     }
 
-    public boolean canCarry(Item item) {
-        int weight = rWeight + (cWeight + item.weight);
+    public boolean canCarry(Cargo item) {
+        int weight = baseWeight + cargoWeight + item.weight;
         return weight < maxWeight;
     }
 
-    public void carry(Item item) {
-        int weight = rWeight + (cWeight + item.weight);
-        cWeight = weight;
+    public void carry(Cargo item) {
+        cargo.add(item);
+        cargoWeight += item.weight;
     }
 }

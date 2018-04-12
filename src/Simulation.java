@@ -1,20 +1,36 @@
 import java.io.File;
 import java.text.NumberFormat;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 
 public class Simulation {
 
-    public ArrayList<Item> loadItems(String path) throws Exception {
-        ArrayList<Item> cargo = new ArrayList<Item>();
+    public ArrayList<Rocket> rockets = new ArrayList<Rocket>();
+    public Class rocketType;
 
-        File file = new File(path);
+    public Simulation(Class rocketType){
+        this.rocketType = rocketType;
+    }
+
+    public void prepareRockets(File f1, File f2) throws Exception {
+        ArrayList<Cargo> phase1Manifest = loadCargo(f1);
+        ArrayList<Cargo> phase2Manifest = loadCargo(f2);
+
+        rockets.addAll(createLoadedRockets(phase1Manifest));
+        rockets.addAll(createLoadedRockets(phase2Manifest));
+    }
+
+    public ArrayList<Cargo> loadCargo(File path) throws Exception {
+        ArrayList<Cargo> cargo = new ArrayList<Cargo>();
+
+        File file = new File(String.valueOf(path));
         Scanner scanner = new Scanner(file);
 
         while(scanner.hasNextLine()){
             String line = scanner.nextLine();
             String [] data = line.split("=");
-            Item item = new Item();
+            Cargo item = new Cargo();
             item.name = data[0];
             item.weight = Integer.parseInt(data[1]);
             cargo.add(item);
@@ -23,41 +39,28 @@ public class Simulation {
         return cargo;
     }
 
-    public ArrayList<U1> loadU1(ArrayList<Item> items) throws Exception {
-        ArrayList<U1> rockets = new ArrayList<U1>();
+    public List<Rocket> createLoadedRockets(ArrayList<Cargo> item) throws Exception {
 
-        U1 rU1 = new U1();
+        ArrayList<Rocket> fleet = new ArrayList<Rocket>();
 
-        for (Item item: items) {
-            if (rU1.canCarry(item)){
-                rU1.carry(item);
+        Rocket r = (Rocket) rocketType.getConstructor().newInstance();
+
+        fleet.add(r);
+
+        for (Cargo i : item) {
+            if (r.canCarry(i)){
+                r.carry(i);
             } else {
-                rockets.add(rU1);
-                rU1 = new U1();
+                r = (Rocket) rocketType.getConstructor().newInstance();
+                rockets.add(r);
             }
         }
 
-        return rockets;
+        return fleet;
+
     }
 
-    public ArrayList<U2> loadU2(ArrayList<Item> items) throws Exception {
-        ArrayList<U2> rockets = new ArrayList<U2>();
-
-        U2 rU2 = new U2();
-
-        for (Item item: items) {
-            if (rU2.canCarry(item)){
-                rU2.carry(item);
-            } else {
-                rockets.add(rU2);
-                rU2 = new U2();
-            }
-        }
-
-        return rockets;
-    }
-
-    public void runSimulation(ArrayList<Rocket> rockets, String name) throws Exception {
+    public void run() throws Exception {
         int totalBudget = 0;
         int totalTrips = 0;
         int totalFails = 0;
@@ -67,18 +70,18 @@ public class Simulation {
         for(int i = 0; i < rockets.size(); i++){
             Rocket rocket = rockets.get(i);
             if (!rocket.launch() || !rocket.land()){
-                System.out.println(String.format("|  %s Rocket #%s failed, launching again", name, i));
+                System.out.println(String.format("|  %s Rocket #%s failed, launching again", rocketType.getSimpleName(), i));
                 totalFails++;
             }
             else {
-                System.out.println(String.format("|  %s Rocket #%s launched and landed successfully", name, i));
+                System.out.println(String.format("|  %s Rocket #%s launched and landed successfully", rocketType.getSimpleName(), i));
             }
-            totalBudget += rocket.rCost;
+            totalBudget += rocket.cost;
             totalTrips++;
         }
 
         System.out.println(String.format("+=========================================================="));
-        System.out.println(String.format("|  Results of %s Rockets for both Phase 1 and Phase 2", name));
+        System.out.println(String.format("|  Results of %s Rockets for both Phase 1 and Phase 2", rocketType.getSimpleName()));
         System.out.println(String.format("|--------------------------------"));
         System.out.println(String.format("|  Total Budget: $%s", NumberFormat.getNumberInstance().format(totalBudget)));
         System.out.println(String.format("|  Total Trips: %s", totalTrips));

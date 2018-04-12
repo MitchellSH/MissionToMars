@@ -1,4 +1,4 @@
-public class Item {
+public class Cargo {
     String name;
     int weight;
 }
